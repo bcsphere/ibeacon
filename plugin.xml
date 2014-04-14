@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="org.bcsphere.ibeacon"
+    version="0.0.1">
+
+    <name>IBeacon</name>
+	<description>IBeacon plugin based on BC.js</description>
+	<license>Apache 2.0</license>
+	<keywords>bcsphere,ibeacon</keywords>
+	<engines>
+        <engine name="cordova" version=">=3.0.0" />
+    </engines>
+	
+	<js-module src="www/ibeacon.js" name="ibeacon">
+        <merges target="navigator.ibeacon" />
+    </js-module>
+	
+	<dependency id="com.bcsphere.bluetooth" url="https://github.com/bcsphere/bluetooth.git"/>
+	
+  <!-- android -->
+  <platform name="android">
+	<source-file src="src/bcibeacon.js" target-dir="assets/www" />
+  </platform>
+
+  <!-- ios -->
+  <platform name="ios">
+      <config-file target="config.xml" parent="/*">
+          <feature name="BCIBeacon">
+              <param name="ios-package" value="org.bcsphere.ibeacon.BCIBeacon"/>
+          </feature>
+      </config-file>
+    
+      <header-file src="src/ios/BCIBeacon.h" />
+      <source-file src="src/ios/BCIBeacon.m" />
+	  <asset src="src/bcibeacon.js" target ="bcibeacon.js"/>
+  </platform>
+</plugin>

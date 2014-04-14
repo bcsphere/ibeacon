@@ -16,7 +16,7 @@
         <merges target="navigator.ibeacon" />
     </js-module>
 	
-	<dependency id="com.bcsphere.bluetooth" url="https://github.com/bcsphere/bluetooth.git"/>
+	
 	
   <!-- android -->
   <platform name="android">

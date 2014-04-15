@@ -20,7 +20,7 @@ var platform = require('cordova/platform');
 var interval_index = null;
 
 /**
- * Provides access to wifi on the device.
+ * Provides access to ibeacon.
  */
 var ibeacon = {
 	
@@ -36,6 +36,9 @@ var ibeacon = {
 		cordova.exec(callback,errorFunc,"BCBluetooth","startIBeaconAdvertising",[{"proximityUUID":proximityUUID,"major":major,"minor":minor,"identifier":identifier}]);
 	},
 	
+	addEventListener : function(callback,errorFunc,arg){
+		cordova.exec(callback,errorFunc,"BCBluetooth","addEventListener",[{"eventName":arg.eventName,"arg":arg.arg}]);
+	},
 };
-module.exports = wifi;
+module.exports = ibeacon;
 

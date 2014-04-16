@@ -27,7 +27,7 @@
   <platform name="ios">
       <config-file target="config.xml" parent="/*">
           <feature name="BCIBeacon">
-              <param name="ios-package" value="org.bcsphere.ibeacon.BCIBeacon"/>
+              <param name="ios-package" value="BCIBeacon"/>
           </feature>
       </config-file>
     

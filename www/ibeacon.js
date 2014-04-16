@@ -25,19 +25,19 @@ var interval_index = null;
 var ibeacon = {
 	
 	startIBeaconScan : function(callback,errorFunc,proximityUUID,major,minor){
-		cordova.exec(callback,errorFunc,"BCBluetooth","startIBeaconScan",[{"proximityUUID":proximityUUID,"major":major,"minor":minor}]);
+		cordova.exec(callback,errorFunc,"BCIBeacon","startIBeaconScan",[{"proximityUUID":proximityUUID,"major":major,"minor":minor}]);
 	},
 	
 	stopIBeaconScan : function(callback,errorFunc,proximityUUID,major,minor){
-		cordova.exec(callback,errorFunc,"BCBluetooth","stopIBeaconScan",[{"proximityUUID":proximityUUID,"major":major,"minor":minor}]);
+		cordova.exec(callback,errorFunc,"BCIBeacon","stopIBeaconScan",[{"proximityUUID":proximityUUID,"major":major,"minor":minor}]);
 	},
 	
 	startIBeaconAdvertising : function(callback,errorFunc,proximityUUID,major,minor,identifier){
-		cordova.exec(callback,errorFunc,"BCBluetooth","startIBeaconAdvertising",[{"proximityUUID":proximityUUID,"major":major,"minor":minor,"identifier":identifier}]);
+		cordova.exec(callback,errorFunc,"BCIBeacon","startIBeaconAdvertising",[{"proximityUUID":proximityUUID,"major":major,"minor":minor,"identifier":identifier}]);
 	},
 	
 	addEventListener : function(callback,errorFunc,arg){
-		cordova.exec(callback,errorFunc,"BCBluetooth","addEventListener",[{"eventName":arg.eventName,"arg":arg.arg}]);
+		cordova.exec(callback,errorFunc,"BCIBeacon","addEventListener",[{"eventName":arg.eventName,"arg":arg.arg}]);
 	},
 };
 module.exports = ibeacon;

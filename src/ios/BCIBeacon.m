@@ -1,70 +1,228 @@
-/*
- Copyright 2013-2014 JUMA Technology
- 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
- 
- http://www.apache.org/licenses/LICENSE-2.0
- 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- */
+//
+//  BCIBeacon.m
+//  BCSphereCoreDev
+//
+//  Created by NPHD on 14-4-15.
+//
+//
 
-#import "BCWifi.h"
+#import "BCIBeacon.h"
 
-@implementation BCWifi
+#define STARTBEACON @"startBeacon"
+#define STOPBEACON @"stopBeacon"
+#define BEACON_PROXIMITYUUID @"proximityUUID"
+#define BEACON_MAJOR @"major"
+#define BEACON_MINOR @"minor"
+#define BEACON_PROXIMITY @"proximity"
+#define BEACON_ACCURACY @"accuracy"
+#define BEACON_RSSI @"RSSI"
+#define BEACON_IDENTIFIER @"identifier"
+#define EVENT_IBEACONACCURACYUPDATE @"ibeaconaccuracyupdate"
+#define EVENT_NAME @"eventName"
 
-- (NSString *)getIP {
-    NSString *address = @"error";
-    struct ifaddrs *interfaces = NULL;
-    struct ifaddrs *temp_addr = NULL;
-    int success = 0;
-    success = getifaddrs(&interfaces);
-    if (success == 0) {
-        temp_addr = interfaces;
-        while(temp_addr != NULL) {
-            if(temp_addr->ifa_addr->sa_family == AF_INET) {
-                if([[NSString stringWithUTF8String:temp_addr->ifa_name] isEqualToString:@"en0"]) {
-                    address = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
-                }
+@implementation BCIBeacon
+
+- (void)pluginInitialize{
+    [super pluginInitialize];
+    if (!isVariableInit) {
+        [self variableInit];
+    }
+}
+
+- (void)variableInit{
+    isVariableInit = TRUE;
+    self.beaconPeripheralManager = [[CBPeripheralManager alloc] initWithDelegate:self queue:nil];
+
+}
+
+#pragma mark -
+#pragma mark - CBperipheralManagerDelegate
+- (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral {
+    switch (peripheral.state) {
+        case CBPeripheralManagerStatePoweredOn:
+            break;
+        default:
+            break;
+    }
+}
+
+#pragma mark
+#pragma mark locationDelegate
+#pragma mark
+- (void)startRangingForBeacons{
+    if (!self.locationManager) {
+        self.locationManager = [[CLLocationManager alloc] init];
+        self.locationManager.delegate = self;
+        self.locationManager.activityType = CLActivityTypeFitness;
+        self.locationManager.distanceFilter = kCLDistanceFilterNone;
+        self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    }
+    if (!self.rangedRegions) {
+        self.rangedRegions = [[NSMutableDictionary alloc] init];
+    }
+    
+    [self turnOnRanging];
+}
+
+- (void)turnOnRanging{
+    if (![CLLocationManager isRangingAvailable]) {
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        [self.commandDelegate sendPluginResult:result callbackId:[[NSUserDefaults standardUserDefaults] valueForKey:STARTBEACON]];
+        return;
+    }
+}
+
+- (void)startIBeaconAdvertising:(CDVInvokedUrlCommand *)command{
+    if (self.beaconPeripheralManager.state != 5) {
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        return;
+    }
+    
+    CLBeaconRegion *beaconRegion;
+    NSString *strKUUID = [self parseStringFromJS:command.arguments keyFromJS:BEACON_PROXIMITYUUID];
+    NSString *kIdentifier = [self parseStringFromJS:command.arguments keyFromJS:BEACON_IDENTIFIER];
+    NSUUID *proximityUUID = [[NSUUID alloc] initWithUUIDString:strKUUID];
+    if ([self isNormalString:[self parseStringFromJS:command.arguments keyFromJS:BEACON_MAJOR]]) {
+        CLBeaconMajorValue majorValue = [[self parseStringFromJS:command.arguments keyFromJS:BEACON_MAJOR] intValue];
+        if ([self isNormalString:[self parseStringFromJS:command.arguments keyFromJS:BEACON_MINOR]]) {
+            CLBeaconMinorValue minorValue = [[self parseStringFromJS:command.arguments keyFromJS:BEACON_MINOR] intValue];
+            beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID major:majorValue minor:minorValue identifier:kIdentifier];
+        }else{
+            beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID major:majorValue identifier:kIdentifier];
+        }
+    }else{
+        beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID  identifier:kIdentifier];
+    }
+    NSMutableDictionary *beaconPeripheralData = [beaconRegion peripheralDataWithMeasuredPower:nil];
+    [self.beaconPeripheralManager startAdvertising:beaconPeripheralData];
+    
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    
+}
+
+- (void)startIBeaconScan:(CDVInvokedUrlCommand *)command{
+    [[NSUserDefaults standardUserDefaults] setValue:command.callbackId forKey:STARTBEACON];
+    
+    [self startRangingForBeacons];
+    [self.rangedRegions removeAllObjects];
+    
+    CLBeaconRegion *beaconRegion;
+    NSString *strKUUID = [self parseStringFromJS:command.arguments keyFromJS:BEACON_PROXIMITYUUID];
+    NSString *kIdentifier = [self parseStringFromJS:command.arguments keyFromJS:BEACON_IDENTIFIER];
+    NSUUID *proximityUUID = [[NSUUID alloc] initWithUUIDString:strKUUID];
+    if ([self isNormalString:[self parseStringFromJS:command.arguments keyFromJS:BEACON_MAJOR]]) {
+        CLBeaconMajorValue majorValue = [[self parseStringFromJS:command.arguments keyFromJS:BEACON_MAJOR] intValue];
+        if ([self isNormalString:[self parseStringFromJS:command.arguments keyFromJS:BEACON_MINOR]]) {
+            CLBeaconMinorValue minorValue = [[self parseStringFromJS:command.arguments keyFromJS:BEACON_MINOR] intValue];
+            beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID major:majorValue minor:minorValue identifier:kIdentifier];
+        }else{
+            beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID major:majorValue identifier:kIdentifier];
+        }
+    }else{
+        beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID  identifier:kIdentifier];
+    }
+    
+    [self.locationManager startRangingBeaconsInRegion:beaconRegion];
+}
+
+- (void)stopIBeaconScan:(CDVInvokedUrlCommand *)command{
+    if (self.locationManager.rangedRegions.count == 0) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setValue:command.callbackId forKey:STOPBEACON];
+    CLBeaconRegion *beaconRegion;
+    NSString *strKUUID = [self parseStringFromJS:command.arguments keyFromJS:BEACON_PROXIMITYUUID];
+    NSString *kIdentifier = [self parseStringFromJS:command.arguments keyFromJS:BEACON_IDENTIFIER];
+    NSUUID *proximityUUID = [[NSUUID alloc] initWithUUIDString:strKUUID];
+    if ([self isNormalString:[self parseStringFromJS:command.arguments keyFromJS:BEACON_MAJOR]]) {
+        CLBeaconMajorValue majorValue = [[self parseStringFromJS:command.arguments keyFromJS:BEACON_MAJOR] intValue];
+        if ([self isNormalString:[self parseStringFromJS:command.arguments keyFromJS:BEACON_MINOR]]) {
+            CLBeaconMinorValue minorValue = [[self parseStringFromJS:command.arguments keyFromJS:BEACON_MINOR] intValue];
+            beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID major:majorValue minor:minorValue identifier:kIdentifier];
+        }else{
+            beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID major:majorValue identifier:kIdentifier];
+        }
+    }else{
+        beaconRegion = [[CLBeaconRegion alloc] initWithProximityUUID:proximityUUID  identifier:kIdentifier];
+    }
+    [self.locationManager stopRangingBeaconsInRegion:beaconRegion];
+    
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:[[NSUserDefaults standardUserDefaults] valueForKey:STOPBEACON]];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didRangeBeacons:(NSArray *)beacons inRegion:(CLBeaconRegion *)region {
+    self.rangedRegions[region] = beacons;
+    
+    NSMutableArray *allBeacons = [NSMutableArray array];
+    
+    for (NSArray *regionResult in [self.rangedRegions allValues]){
+        [allBeacons addObjectsFromArray:regionResult];
+    }
+    
+    for (NSNumber *range in @[@(CLProximityUnknown), @(CLProximityImmediate), @(CLProximityNear), @(CLProximityFar)])
+    {
+        NSArray *proximityBeacons = [allBeacons filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"proximity = %d", [range intValue]]];
+        if([proximityBeacons count]){
+            for (CLBeacon *beacon in proximityBeacons) {
+                NSMutableDictionary *callbackInfo = [[NSMutableDictionary alloc] init];
+                [callbackInfo setValue:[NSString stringWithFormat:@"%@",beacon.proximityUUID.UUIDString] forKey:BEACON_PROXIMITYUUID];
+                [callbackInfo setValue:[self getBase64EncodedFromData:[[NSString stringWithFormat:@"%@",beacon.major] dataUsingEncoding: NSUTF8StringEncoding]] forKey:BEACON_MAJOR];
+                [callbackInfo setValue:[self getBase64EncodedFromData:[[NSString stringWithFormat:@"%@",beacon.minor] dataUsingEncoding: NSUTF8StringEncoding]] forKey:BEACON_MINOR];
+                [callbackInfo setValue:[NSString stringWithFormat:@"%d",beacon.proximity] forKey:BEACON_PROXIMITY];
+                [callbackInfo setValue:[NSString stringWithFormat:@"%f",beacon.accuracy] forKey:BEACON_ACCURACY];
+                [callbackInfo setValue:[NSString stringWithFormat:@"%i",beacon.rssi] forKey:BEACON_RSSI];
+                
+                CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:callbackInfo];
+                [result setKeepCallbackAsBool:TRUE];
+                [self.commandDelegate sendPluginResult:result callbackId:[[NSUserDefaults standardUserDefaults] valueForKey:EVENT_IBEACONACCURACYUPDATE]];
             }
-            temp_addr = temp_addr->ifa_next;
         }
     }
-    freeifaddrs(interfaces);
-    return address;
 }
 
-- (id)getSSIDinfo{
-    NSArray *ifs = (__bridge_transfer id)CNCopySupportedInterfaces();
-    id info = nil;
-    for (NSString *ifnam in ifs) {
-        info = (__bridge_transfer id)CNCopyCurrentNetworkInfo((__bridge CFStringRef)ifnam);
-        if (info && [info count]) { break; }
+- (void)addEventListener:(CDVInvokedUrlCommand *)command{
+    if ([self existCommandArguments:command.arguments]) {
+        NSString *eventName = [self parseStringFromJS:command.arguments keyFromJS:EVENT_NAME];
+        [[NSUserDefaults standardUserDefaults] setValue:command.callbackId forKey:eventName];
+    }else{
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
     }
-    return info;
 }
 
-- (void)getConnectedWifiInfo:(CDVInvokedUrlCommand*)command{
-    CDVPluginResult* pluginResult = nil;
-    NSString* ipaddr = [self getIP];
-    NSMutableDictionary *dicInfo = [[NSMutableDictionary alloc] init];
-    NSMutableDictionary* dicSSID = [self getSSIDinfo];
-    [dicInfo setObject:[NSString stringWithFormat:@"%@",ipaddr] forKey:@"IPAddress"];
-    [dicInfo setObject:[NSString stringWithFormat:@"%@",[dicSSID objectForKey:@"BSSID"]] forKey:@"BSSID"];
-    [dicInfo setObject:[NSString stringWithFormat:@"%@",[dicSSID objectForKey:@"SSID"]] forKey:@"SSID"];
-    [dicInfo setObject:@"" forKey:@"MacAddress"];
-    if (ipaddr != nil && ![ipaddr isEqualToString:@"error"]) {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:dicInfo];
-    } else {
-        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+# pragma mark -
+# pragma mark MISC
+# pragma mark -
+
+- (BOOL)existCommandArguments:(NSArray*)comArguments{
+    NSMutableArray *commandArguments=[[NSMutableArray alloc] initWithArray:comArguments];
+    if (commandArguments.count > 0) {
+        return TRUE;
+    }else{
+        return FALSE;
     }
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (NSString*)getBase64EncodedFromData:(NSData*)data{
+    NSData *newData = [[NSData alloc] initWithData:data];
+    NSString *value = [newData base64EncodedString];
+    return value;
+}
+
+- (BOOL)isNormalString:(NSString*)string{
+    if (![string isEqualToString:@"(null)"] && ![string isEqualToString:@"null"] && string.length > 0){
+        return TRUE;
+    }else{
+        return FALSE;
+    }
+}
+
+- (NSString*)parseStringFromJS:(NSArray*)commandArguments keyFromJS:(NSString*)key{
+    NSString *string = [NSString stringWithFormat:@"%@",[[commandArguments objectAtIndex:0] valueForKey:key]];
+    return string;
 }
 
 @end
-

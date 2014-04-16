@@ -1,31 +1,34 @@
-/*
- Copyright 2013-2014 JUMA Technology
- 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
- 
- http://www.apache.org/licenses/LICENSE-2.0
- 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- */
+//
+//  BCIBeacon.h
+//  BCSphereCoreDev
+//
+//  Created by NPHD on 14-4-15.
+//
+//
 
-#import <Cordova/CDVPlugin.h>
-#import <Cordova/CDVInvokedUrlCommand.h>
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+#import <CoreBluetooth/CoreBluetooth.h>
 #import <Cordova/NSDictionary+Extensions.h>
 #import <Cordova/NSArray+Comparisons.h>
 #import <CoreBluetooth/CBService.h>
+#import <Cordova/CDVPlugin.h>
+#import <Cordova/NSData+Base64.h>
 #import <Cordova/CDVJSON.h>
-#import <SystemConfiguration/CaptiveNetwork.h>
-#include <ifaddrs.h>
-#include <arpa/inet.h>
+#import <CoreLocation/CoreLocation.h>
+#import "BCBluetooth.h"
 
-@interface BCWifi : CDVPlugin{
-   
+@interface BCIBeacon : CDVPlugin<CBPeripheralManagerDelegate,CLLocationManagerDelegate>
+{
+    BOOL isVariableInit;
 }
-- (void)getConnectedWifiInfo:(CDVInvokedUrlCommand* )command;
+@property (retain, nonatomic) CBPeripheralManager *beaconPeripheralManager;
+@property (nonatomic, strong) CLLocationManager *locationManager;
+@property (nonatomic, strong) CLBeaconRegion *beaconRegion;
+@property NSMutableDictionary *rangedRegions;
+
+- (void)addEventListener:(CDVInvokedUrlCommand *)command;
+- (void)startIBeaconScan:(CDVInvokedUrlCommand *)command;
+- (void)stopIBeaconScan:(CDVInvokedUrlCommand *)command;
+- (void)startIBeaconAdvertising:(CDVInvokedUrlCommand *)command;
 @end

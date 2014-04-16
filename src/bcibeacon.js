@@ -75,27 +75,21 @@
 		return res;
 	};
 	
-	function fireDocumentEvent(eventName,arg){
-		var event = document.createEvent('Events');
-		event.arg = arg;
-		event.initEvent(eventName, false, false);
-		document.dispatchEvent(event);
-	}
-	
 	function isEmpty(s){
 		return ((s == undefined || s == null || s == "") ? true : false); 
 	}
 	
-	document.addEventListener('bcready', onBCReady, false);
+	document.addEventListener('bccoreready', onBCCoreReady, false);
 	
-	function onBCReady(){
-		var	iBeaconManager = BC.iBeaconManager = new BC.IBeaconManager();
-		fireDocumentEvent("ibeaconready");
+	function onBCCoreReady(){
+		var eventName = "org.bcsphere.ibeacon.ready";
+		var	iBeaconManager = BC.iBeaconManager = new BC.IBeaconManager("org.bcsphere.ibeacon",eventName);
+		BC.bluetooth.dispatchEvent(eventName);
 	}
 	
-	var IBeaconManager = BC.IBeaconManager = BC.EventDispatcher.extend({
+	var IBeaconManager = BC.IBeaconManager = BC.Plugin.extend({
 	
-		initialize : function(){
+		pluginInitialize : function(){
 			
 			if(API == "ios"){
 				navigator.ibeacon.addEventListener('ibeaconaccuracyupdate', function(arg){
@@ -126,7 +120,7 @@
 			
 		},
 		
-	})
+	});
 	
 	/** 
 	 * Starts IBeacon Advertising (It's only support IOS >= 7.0 now).

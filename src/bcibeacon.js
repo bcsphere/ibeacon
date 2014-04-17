@@ -99,7 +99,7 @@
 					var minorStr = minorStrObj.getHexString();
 					var iBeaconID = arg.proximityUUID + majorStr + minorStr;
 					if(isNewIBeacon(iBeaconID)){
-						var newibeacon = new BC.IBeacon(deviceAddress,deviceName,advertisementData,isConnected,RSSI,iBeaconID,null,arg.accuracy,arg.proximity);
+						var newibeacon = new BC.IBeacon({iBeaconID:iBeaconID,accuracy:arg.accuracy,proximity:arg.proximity});
 						BC.iBeaconManager.ibeacons[iBeaconID] = newibeacon;
 						BC.iBeaconManager.dispatchEvent("newibeacon",newibeacon);
 					}else{
@@ -195,7 +195,7 @@
 				}
 						
 				if(isNewIBeacon(iBeaconID)){
-					var newibeacon = new BC.IBeacon(deviceAddress,deviceName,advertisementData,isConnected,RSSI,iBeaconID,txPower);
+					var newibeacon = new BC.IBeacon({deviceAddress:deviceAddress,deviceName:deviceName,advertisementData:advertisementData,isConnected:isConnected,RSSI:RSSI,iBeaconID:iBeaconID,txPower:txPower});
 					if(newibeacon.matchRegion(BC.iBeaconManager.region)){
 						BC.iBeaconManager.ibeacons[iBeaconID] = newibeacon;
 						BC.iBeaconManager.dispatchEvent("newibeacon",newibeacon);
@@ -247,8 +247,8 @@
 	 */
 	var IBeacon = BC.IBeacon = BC.Device.extend({
 	
-		deviceInitialize : function(){
-			this.iBeaconID = arguments[5];
+		deviceInitialize : function(arg){
+			this.iBeaconID = arg.iBeaconID;
 			this.proximityUUID = this.iBeaconID.substring(0,8);
 			this.proximityUUID += '-';
 			this.proximityUUID += this.iBeaconID.substring(8,12);
@@ -261,15 +261,15 @@
 			
 			this.major = BC.Tools.ConvertHexStringToInt(this.iBeaconID.substring(32,36));
 			this.minor = BC.Tools.ConvertHexStringToInt(this.iBeaconID.substring(36,40));
-			this.txPower = arguments[6];
+			this.txPower = arg.txPower;
 			this.proximity = -1;
 			
-			if(isEmpty(arguments[7])){
+			if(isEmpty(arg.accuracy)){
 				this.calculateAccuracy();
 			}else{
 				//if this new iBeacon form IOS > 7.0
-				this.accuracy = arguments[7];
-				this.proximity = arguments[8];
+				this.accuracy = arg.accuracy;
+				this.proximity = arg.proximity;
 			}
 		},
 	

@@ -28,10 +28,10 @@
 	 
 	/**
 	 * Triggered when iBeacon proximity has been updated.
-	 * @example BC.iBeaconManager.addEventListener("newibeacon",onNewIBeacon);
+	 * @example BC.iBeaconManager.addEventListener("ibeaconproximityupdate",onNewIBeacon);
 	 * function onNewIBeacon(s){
-	 *	var newibeacon = s.target;
-	 *	newibeacon.addEventListener("ibeaconproximityupdate",onIBeaconProximityUpdate);
+	 *	var theibeacon = s.target;
+	 *	theibeacon.addEventListener("ibeaconproximityupdate",onIBeaconProximityUpdate);
 	 * }
 	 * function onIBeaconProximityUpdate(theibeacon){
 	 *	alert("iBeacon proximity: " + theibeacon.proximity);
@@ -42,10 +42,10 @@
 	 
 	/**
 	 * Triggered when iBeacon accuracy has been updated.
-	 * @example BC.iBeaconManager.addEventListener("newibeacon",app.onNewIBeacon);
+	 * @example BC.iBeaconManager.addEventListener("ibeaconaccuracyupdate",app.onNewIBeacon);
 	 * function onNewIBeacon(s){
-	 *	var newibeacon = s.target;
-	 *	newibeacon.addEventListener("ibeaconaccuracyupdate",onIBeaconAccuracyUpdate);
+	 *	var theibeacon = s.target;
+	 *	theibeacon.addEventListener("ibeaconaccuracyupdate",onIBeaconAccuracyUpdate);
 	 * }
 	 * function onIBeaconAccuracyUpdate(theibeacon){
 	 *	alert("iBeacon accuracy: " + theibeacon.accuracy);

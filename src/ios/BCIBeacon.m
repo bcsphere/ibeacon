@@ -35,6 +35,16 @@
 
 }
 
+- (void)addEventListener:(CDVInvokedUrlCommand *)command{
+    if ([self existCommandArguments:command.arguments]) {
+        NSString *eventName = [self parseStringFromJS:command.arguments keyFromJS:EVENT_NAME];
+        [[NSUserDefaults standardUserDefaults] setValue:command.callbackId forKey:eventName];
+    }else{
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }
+}
+
 #pragma mark -
 #pragma mark - CBperipheralManagerDelegate
 - (void)peripheralManagerDidUpdateState:(CBPeripheralManager *)peripheral {
@@ -180,16 +190,6 @@
                 [self.commandDelegate sendPluginResult:result callbackId:[[NSUserDefaults standardUserDefaults] valueForKey:EVENT_IBEACONACCURACYUPDATE]];
             }
         }
-    }
-}
-
-- (void)addEventListener:(CDVInvokedUrlCommand *)command{
-    if ([self existCommandArguments:command.arguments]) {
-        NSString *eventName = [self parseStringFromJS:command.arguments keyFromJS:EVENT_NAME];
-        [[NSUserDefaults standardUserDefaults] setValue:command.callbackId forKey:eventName];
-    }else{
-        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR];
-        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
     }
 }
 

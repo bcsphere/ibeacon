@@ -34,5 +34,6 @@
       <header-file src="src/ios/BCIBeacon.h" />
       <source-file src="src/ios/BCIBeacon.m" />
 	  <asset src="src/bcibeacon.js" target ="bcibeacon.js"/>
+      <framework src="CoreBluetooth.framework" weak="true" />
   </platform>
 </plugin>
